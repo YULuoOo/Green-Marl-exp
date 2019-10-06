@@ -1,0 +1,32 @@
+Proc naive_cc (G: Graph, mem: N_P<Long>, id: N_P<Long>) :Long
+{
+    Long cc_num = 0;
+    Long ret=1;
+    Map<Long,Long> map;
+    Foreach(n:G.Nodes){
+	map[n.id] = n.mem;
+    }
+    While(ret!=0)
+    {
+	ret = 0;
+        Foreach(n:G.Nodes)
+        {
+	    Int minId = n.id;
+            Foreach(e:n.Nbrs){
+                minId min= e.mem;
+	    }
+	    If(n.mem > minId){
+	        map[n.id] = minId;
+	        ret++;
+	    }
+        }
+	Foreach(n:G.Nodes)
+	    n.mem = map[n.id];
+    }
+   
+     Foreach(n:G.Nodes){
+        If(n.id == n.mem)
+            cc_num++;
+    }
+    Return cc_num;
+}

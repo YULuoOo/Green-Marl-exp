@@ -1,0 +1,169 @@
+Procedure init(G:Graph, parent:N_P<Node>, id:N_P<Long>, pid:N_P<Long>)
+{
+    Foreach(n: G.Nodes){
+        Foreach(in: n.Nbrs){
+            <n.pid;n.parent> min= <in.id;in>;
+        }
+    }
+    Foreach(n:G.Nodes){
+        If(n.pid >= n.id)
+	        n.parent = n;
+    }
+}
+//due to the mistake in paper, this function "correct" the first step. Make it same as Figure2 in paper.
+Procedure mistake(G:Graph, parent:N_P<Node>, id:N_P<Long>, pid:N_P<Long>){
+    Foreach(n:G.Nodes){
+	    Foreach(t:G.Nodes){
+	        If(n.id==12 && t.id == 10){
+		        n.pid = 10;
+	                n.parent = t;
+	        }
+	    }
+    }
+}
+
+Procedure singleton_elimination(G: Graph, size:Long, parent:N_P<Node>, id:N_P<Long>,pid:N_P<Long>,count:N_P<Int>){
+    Foreach(n:G.Nodes){
+        Foreach(e: n.Nbrs){
+	        If(e.pid == n.id){
+		        n.count += 1;
+	        }
+	    }
+    }
+    Foreach(n:G.Nodes){
+	    Long mmin = size;
+	    Node nn;
+	    Int flag = 0;
+        If(n.count ==0 && n.pid == n.id){
+	        Foreach(e:n.Nbrs){
+	            <mmin;nn> min= <e.id;e>;
+    	        flag = 1;
+	        }
+	        If(flag == 1){
+		        n.pid = mmin;
+		        n.parent = nn;
+	        }
+	    }
+    }
+}
+Procedure star_detection(G: Graph, parent:N_P<Node>,id:N_P<Long>,pid:N_P<Long>,star:N_P<Int>):Long{
+    Long ret = 0;
+    G.star = 1;
+    //rule 1
+    Foreach(n:G.Nodes){
+        Node fa = n.parent;
+	    If(fa.pid != n.pid){
+	        n.star = 0;
+	    }
+    }
+    //rule 2
+    Foreach(n:G.Nodes){
+	    If(n.star == 0){
+           //shit grammar!
+	        Node fa = n.parent;
+	        Node gf = fa.parent;
+	        gf.star = 0;
+	    }
+    }
+    //rule 3
+    Foreach(n:G.Nodes){
+	    Node fa = n.parent;
+	    If(fa.star == 0)
+	        n.star = 0;
+    }
+    Foreach(n:G.Nodes){
+            If(n.star == 1)
+                ret += 1;
+    }
+    Return ret;
+}
+Procedure C_star_hooking(G: Graph, size:Long,parent:N_P<Node>,id:N_P<Long>,pid:N_P<Long>,star:N_P<Int>):Int{
+	Int ret = 0;
+       Foreach(n:G.Nodes)(n.star==1 && n.pid == n.id){
+               Long minPPid = size+1;
+               Node minNNode = n;
+               Long minPid2 = size+1;
+               Node minNode2 = n;
+               InBFS(e:G.Nodes From n)[e.pid == n.id]{
+                   Long minPid = size+1;
+                   Node minNode = n;
+                   Foreach(t:e.Nbrs){
+                       <minPid;minNode> min= <t.pid;t.parent>;
+                   }
+                   <minPPid;minNNode> min= <minPid;minNode>;
+               }
+               Foreach(t:n.Nbrs)(t.pid != n.id){
+                    <minPid2;minNode2> min= <t.pid;t.parent>;
+               }
+               If(minPPid>minPid2){
+                   minPPid = minPid2;
+                   minNNode = minNode2;
+               }
+             If(n.id > minPPid){
+                     ret++;
+                     n.parent = minNNode;
+                     n.pid = minPPid;
+             }
+        }
+        Return ret;
+}
+
+Procedure U_star_hooking(G: Graph,size: Long, parent:N_P<Node>,id:N_P<Long>,pid:N_P<Long>,star:N_P<Int>):Int{
+   Int ret = 0;
+   Foreach(n:G.Nodes)(n.star==1 && n.pid == n.id){
+          Long minPPid = size+1;
+          Node minNNode;
+          Long minPid2 = size+1;
+          Node minNode2;
+          InBFS(e:G.Nodes From n)[e.pid == n.id]{
+               Long minPid = size+1;
+               Node minNode = n;
+               Foreach(t:e.Nbrs){
+                   <minPid;minNode> min= <t.pid;t.parent>;
+               }
+               <minPPid;minNNode> min= <minPid;minNode>;
+           }
+           Foreach(t:n.Nbrs)(t.pid != n.id){
+                <minPid2;minNode2> min= <t.pid;t.parent>;
+           }
+           If(minPPid>minPid2){
+               minPPid = minPid2;
+               minNNode = minNode2;
+           }
+        If(minPPid != size+1 && minPPid != n.pid){
+           ret++;
+           n.parent = minNNode;
+           n.pid = minPPid;
+       }
+   }
+   Return ret;
+}
+
+Procedure pointer_jumping(G:Graph,parent:N_P<Node>,id:N_P<Long>,pid:N_P<Long>){
+     N_P<Long> parId;
+     N_P<Node> parNode;
+     Map<Long,Node> IdNode;
+     Foreach(n:G.Nodes){
+         n.parId = n.pid;
+         n.parNode = n.parent;
+         IdNode[n.id] = n;
+     }
+     Foreach(n:G.Nodes){
+         Node fn = n.parNode;
+         Long fid = fn.id;
+         Long gid = fn.parId;
+         n.pid = gid;
+     }
+     Foreach(n:G.Nodes){
+         Long fid = n.pid;
+         n.parent = IdNode[fid];
+     }
+}
+Procedure ret_cc_num(G:Graph,id:N_P<Long>,pid:N_P<Long>):Long{
+    Long rett = 0;
+    Foreach(n:G.Nodes){
+	If(n.id == n.pid)
+	    rett++;
+    }
+    Return rett;      
+}
